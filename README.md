@@ -10,6 +10,7 @@ smtp_logs (Table) - archived mail logs.
 
 NoQueue (View) - today's error logs:
 Date, Time, Email From, Email To, Error Message.
+
 noqueue_logs (Table) - archived error logs.
 
 
