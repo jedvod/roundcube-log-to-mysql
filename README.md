@@ -13,7 +13,7 @@ Before using this script:
 2) configure roundcube log to MySQL database (usually, SystemEvents table) and using a LOCAL* setp in rsyslogd
 3) import base.sql to MySQL
 4) import view.sql to MySQL
-5) edit parser.php mysql connect username and password
+5) edit logs-parser.php mysql connect username and password
 
 ./run-parser.sh should be run by cron daily.
 
