@@ -1,98 +1,24 @@
 <?php
 
-$link=mysqli_connect("localhost", "root", "1234567", "postfix");
+$link=mysqli_connect("localhost", "roundcube-logs", "password", "roundcube_db");
 if (mysqli_connect_errno()) {
-	printf("Connect failed: %s\n", mysqli_connect_error());
-	exit();
+        printf("Connect failed: %s\n", mysqli_connect_error());
+        exit();
 }
 mysqli_query($link, 'set names utf8');
 
 
-$result=mysqli_query($link,"SELECT * FROM SystemEvents");
-while($data = mysqli_fetch_array($result)) 
-{ 
-$id=$data['ID'];
-echo $id."	";
-$date=substr($data['ReceivedAt'],2,8);
-$time=substr($data['ReceivedAt'],11);
-echo $time."	";
-$message=$data['Message'];
-#echo $message."<BR>";
-$syslogtag=$data['SysLogTag'];
-#echo $syslogtag."<BR>";
-
-# search queue id
-$queue = substr($message,1,12);
-if (ctype_alnum($queue)){
-echo $queue."	";
-mysqli_query($link,"INSERT INTO smtp_logs (queue) VALUES ('$queue')");
-mysqli_query($link,"UPDATE smtp_logs SET date='$date' WHERE queue='$queue'");
-mysqli_query($link,"UPDATE smtp_logs SET time='$time' WHERE queue='$queue'");
+$result=mysqli_query($link,"SELECT * FROM MainView WHERE date != CURDATE()");
+while($data = mysqli_fetch_array($result))
+{
+$date=$data['date'];
+$time=$data['time'];
+$log=$data['message'];
+mysqli_query($link,"INSERT INTO roundcube_logs (date, time, log) VALUES ('$date', '$time', '$log')");
 }
-#end search queue id
 
-# search client, queue id
-$pos = strpos($message,': client=');
-if ($pos != false){
-if (strpos($message,'NOQUEUE')===false){
-$client = substr($message,22);
-	mysqli_query($link,"UPDATE smtp_logs SET date='$date' WHERE queue='$queue'");
-	mysqli_query($link,"UPDATE smtp_logs SET time='$time' WHERE queue='$queue'");
-	if (strlen($client) > 3){
-	mysqli_query($link,"UPDATE smtp_logs SET client='$client' WHERE queue='$queue'");
-	}
-
-}
-} # end search client, queue id
-
-# search email_from, size
-$pos = strpos($message,': from=');
-if ($pos !=false){
-$email_from=substr($message,$pos+8,strpos($message,'>')-$pos-8);
-echo $email_from."	";
-$message1=str_replace('<','&lt',$message);
-$queue = substr($message,1,12);
-	if (strlen($email_from) > 3){
-	mysqli_query($link,"UPDATE smtp_logs SET email_from='$email_from' WHERE queue='$queue'");
-	}
-$s_begin=strpos($message,'size=');
-$s_end=strpos($message,'nrcpt=');
-$size=substr($message,$s_begin+5,$s_end-$s_begin-7);
-	mysqli_query($link,"UPDATE smtp_logs SET size='$size' WHERE queue='$queue'");
-} # end search email_from, size
-# search email_to, status, status_comment
-$pos = strpos($message,': to=');
-if ($pos !=false){
-
-$message1=str_replace('<','&lt',$message);
-$queue=substr($message,1,12);
-$email_to=substr($message,$pos+6,strpos($message,'>')-$pos-6);
-	mysqli_query($link,"INSERT INTO email_to (queue,email_to) VALUES ('$queue','$email_to')");
-$st_begin=strpos($message,'status=');
-$st_end=strpos($message,'(');
-$status=substr($message,$st_begin+7,$st_end-$st_begin-7);
-echo $status;
-$stc=strpos($message,')');
-$status_comment=substr($message,$st_end+1,$stc-$st_end-1);
-	if (strlen($status) > 1){
-	mysqli_query($link,"UPDATE smtp_logs SET status='$status' WHERE queue='$queue'");
-	}
-	if (strlen($status_comment) > 1){
-	mysqli_query($link,"UPDATE smtp_logs SET status_comment='$status_comment' WHERE queue='$queue'");
-	}
-} #end email_to, status, status_comment
-
-# skip empty messages
-$pos = strpos($message,': message-id=<>');
-if ($pos !=false){
-$queue=substr($message,1,12);
-mysqli_query($link,"DELETE from smtp_logs WHERE queue='$queue'");
-}#end skip empty messages
-
-#mysqli_query($link,"DELETE from SystemEvents WHERE ID='$id'");
-echo "\n";
-} 
 mysqli_free_result($result);
-#mysqli_query($link,"OPTIMIZE TABLE SystemEvents");
+mysqli_query($link,"DELETE FROM SystemEvents WHERE DATE(DeviceReportedTime) != CURDATE()");
+mysqli_query($link,"OPTIMIZE TABLE SystemEvents");
 mysqli_close($link);
 ?>
