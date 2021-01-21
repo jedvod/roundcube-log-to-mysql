@@ -4,4 +4,4 @@ CREATE TABLE  IF NOT EXISTS roundcube_logs (
 	date varchar(10) NOT NULL,
 	time varchar(8) NOT NULL,
 	log text NOT NULL,
-	PRIMARY KEY (ID))  ENGINE=InnoDB;
+	PRIMARY KEY (id))  ENGINE=InnoDB;
