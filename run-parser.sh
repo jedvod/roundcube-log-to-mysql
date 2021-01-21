@@ -1,3 +1,3 @@
 #!/bin/bash
 
-php parser.php
+php logs-parser.php
